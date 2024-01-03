@@ -28,8 +28,52 @@ class _GroceriesScreenState extends State<GroceriesScreen> {
     }
   }
 
+  void _removeItem(GroceryItem item) {
+    final itemIndex =
+        _groceryItems.indexWhere((element) => element.id == item.id);
+    setState(() {
+      _groceryItems.remove(item);
+    });
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item.name} removed.'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              _groceryItems.insert(itemIndex, item);
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    Widget content = const Text('No items added yet!');
+
+    if (_groceryItems.isNotEmpty) {
+      setState(() {
+        content = ListView.builder(
+          itemCount: _groceryItems.length,
+          itemBuilder: (ctx, index) => Dismissible(
+            key: ValueKey(_groceryItems[index].id),
+            background: Container(
+              color: Theme.of(context).colorScheme.error,
+            ),
+            onDismissed: (direction) {
+              _removeItem(_groceryItems[index]);
+            },
+            child: GroceryListItem(
+              groceryItem: _groceryItems[index],
+            ),
+          ),
+        );
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -41,11 +85,7 @@ class _GroceriesScreenState extends State<GroceriesScreen> {
         title: const Text('Your Groceries'),
       ),
       body: Center(
-        child: ListView.builder(
-          itemCount: _groceryItems.length,
-          itemBuilder: (ctx, index) =>
-              GroceryListItem(groceryItem: _groceryItems[index]),
-        ),
+        child: content,
       ),
     );
   }
